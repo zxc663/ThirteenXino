@@ -242,6 +242,13 @@
             display: none;
         }
 
+        /* 游戏选项 */
+        .game-option {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
         /* 响应式调整 */
         @media (max-width: 480px) {
             .dialog-text {
@@ -338,6 +345,11 @@
     <!-- 最后文字 -->
     <div class="final-text" id="finalText">新的完美一天你想好决定要做什么了吗</div>
 
+    <!-- 游戏选项 -->
+    <div class="game-option" id="gameOption">
+        <button class="option-btn" onclick="window.location.href='https://zxc663.github.io/ThirteenXino/1.HTML'">去玩玩小游戏吧</button>
+    </div>
+
     <script>
         // 对话内容数组
         const dialogs = [
@@ -360,10 +372,11 @@
                 if (currentDialogIndex < dialogs.length) {
                     updateDialog(dialogs[currentDialogIndex]);
                 } else {
-                    // 所有对话结束，显示人物和文字
+                    // 所有对话结束，显示人物、文字和游戏选项
                     document.getElementById("dialogContainer").style.display = "none";
                     document.getElementById("funnyCharacter").style.display = "block";
                     document.getElementById("finalText").style.display = "block";
+                    document.getElementById("gameOption").style.display = "block";
                 }
             }
         }
