@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互动问答</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // 自定义Tailwind配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff6b8b',
+                        secondary: '#f8f9fa',
+                        accent: '#ffe0e9'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .popup-shadow {
+                box-shadow: 0 10px 25px -5px rgba(255, 107, 139, 0.3);
+            }
+            .heart-beat {
+                animation: heartbeat 1.5s ease-in-out infinite;
+            }
+            @keyframes heartbeat {
+                0% { transform: scale(1); }
+                15% { transform: scale(1.15); }
+                30% { transform: scale(1); }
+                45% { transform: scale(1.15); }
+                60% { transform: scale(1); }
+                100% { transform: scale(1); }
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease forwards;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-accent to-white min-h-screen flex items-center justify-center p-4 font-sans">
+    <!-- 遮罩层 -->
+    <div id="overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"></div>
+
+    <!-- 问答弹窗 -->
+    <div id="questionPopup" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 md:p-8 popup-shadow max-w-md w-full fade-in z-50">
+        <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-primary text-center mb-8">你是否期待我在？</h2>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button id="btn1" class="px-8 py-3 bg-primary/10 text-primary rounded-full font-medium transition-all hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50">嘴硬</button>
+            <button id="btn2" class="px-8 py-3 bg-primary/10 text-primary rounded-full font-medium transition-all hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50">承认</button>
+        </div>
+    </div>
+
+    <!-- 爱心与提示弹窗（初始隐藏） -->
+    <div id="resultPopup" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-white/95 backdrop-blur-md rounded-2xl p-8 popup-shadow max-w-md w-full opacity-0 pointer-events-none transition-opacity 0.5s z-50">
+        <div class="text-primary text-6xl mb-6 heart-beat">
+            <<i class="fa fa-heart"></</i>
+        </div>
+        <p class="text-[clamp(1.2rem,2vw,1.5rem)] font-medium text-gray-700 text-center">嘻嘻，今天开心吗？</p>
+        <button id="closeBtn" class="mt-8 px-6 py-2 bg-primary text-white rounded-full font-medium transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
+            开心呀
+        </button>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const questionPopup = document.getElementById('questionPopup');
+        const resultPopup = document.getElementById('resultPopup');
+        const overlay = document.getElementById('overlay');
+        const btn1 = document.getElementById('btn1');
+        const btn2 = document.getElementById('btn2');
+        const closeBtn = document.getElementById('closeBtn');
+
+        // 选项点击事件
+        function handleAnswerClick() {
+            // 隐藏问题弹窗
+            questionPopup.style.opacity = '0';
+            questionPopup.style.transform = 'translate(-50%, -50%) scale(0.9)';
+            questionPopup.style.pointerEvents = 'none';
+            
+            // 显示结果弹窗（延迟0.3秒增加过渡效果）
+            setTimeout(() => {
+                resultPopup.style.opacity = '1';
+                resultPopup.style.pointerEvents = 'auto';
+            }, 300);
+        }
+
+        // 关闭弹窗事件
+        function handleClose() {
+            resultPopup.style.opacity = '0';
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                resultPopup.style.pointerEvents = 'none';
+                overlay.style.pointerEvents = 'none';
+            }, 500);
+        }
+
+        // 绑定事件
+        btn1.addEventListener('click', handleAnswerClick);
+        btn2.addEventListener('click', handleAnswerClick);
+        closeBtn.addEventListener('click', handleClose);
+
+        // 页面加载完成后自动显示弹窗
+        window.addEventListener('load', () => {
+            questionPopup.style.opacity = '1';
+            overlay.style.opacity = '1';
+        });
+    </script>
+</body>
+</html>
