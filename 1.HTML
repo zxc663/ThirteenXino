@@ -2,83 +2,216 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>阴没边了都——无限下坠</title>
+  <title>阴没边了都——无限下坠（升级版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <style>
-    body { background: #222; color: #fff; text-align: center; margin: 0; }
-    canvas { background: #111; display: block; margin: 20px auto; border-radius: 8px; }
-    #score { font-size: 24px; margin-top: 10px; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #222;
+      color: #fff;
+      font-family: sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: flex-start;
+      overflow-x: hidden;
+    }
+    h1 { margin-top: 18px; }
+    #score { font-size: 24px; margin: 10px 0 8px; }
+    #container {
+      width: 100vw;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      background: #111;
+      display: block;
+      border-radius: 8px;
+      width: 100%;
+      height: auto;
+      max-width: 100vw;
+      touch-action: none;
+      box-sizing: border-box;
+    }
+    .btns {
+      display: flex;
+      justify-content: space-between;
+      width: 80%;
+      margin: 10px auto;
+      user-select: none;
+    }
+    .btn {
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 20px;
+      padding: 14px 0;
+      width: 42%;
+      margin: 0 2%;
+      touch-action: manipulation;
+      transition: background 0.2s;
+    }
+    .btn:active { background: #666; }
+    @media (max-width: 480px) {
+      #container { max-width: 100vw; }
+      canvas { max-width: 100vw; }
+    }
   </style>
 </head>
 <body>
   <h1>阴没边了都——无限下坠</h1>
-  <div id="score">分数: 0</div>
-  <canvas id="game" width="400" height="600"></canvas>
+  <div id="container">
+    <div id="score">分数: 0</div>
+    <canvas id="game"></canvas>
+    <div class="btns">
+      <button class="btn" id="leftBtn">左</button>
+      <button class="btn" id="rightBtn">右</button>
+    </div>
+  </div>
   <script>
+    // 响应式尺寸
+    function getCanvasSize() {
+      // 最大宽度480，最大高度720，适配绝大多数手机
+      const w = Math.min(window.innerWidth, 480);
+      const h = Math.min(window.innerHeight * 0.7, 720);
+      return { w, h };
+    }
+
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    let player = { x: 200, y: 500, r: 15, speed: 5 };
+    let { w: areaWidth, h: areaHeight } = getCanvasSize();
+    canvas.width = areaWidth;
+    canvas.height = areaHeight;
+
+    // 玩家和障碍初始化
+    let player = { x: areaWidth/2, y: areaHeight-80, r: 18, speed: 6 };
     let obstacles = [];
-    let score = 0, gameOver = false, areaWidth = 400;
+    let score = 0, gameOver = false;
+    let expandMax = areaWidth; // 最大扩展宽度（不超屏幕）
+
+    // 触屏左右控制变量
+    let moveLeft = false, moveRight = false;
+
+    function resizeGame() {
+      const size = getCanvasSize();
+      areaWidth = size.w;
+      areaHeight = size.h;
+      canvas.width = areaWidth;
+      canvas.height = areaHeight;
+      expandMax = areaWidth;
+      // 玩家x位置不出界
+      player.x = Math.max(player.r, Math.min(player.x, areaWidth - player.r));
+      player.y = Math.max(player.r, Math.min(player.y, areaHeight - player.r));
+    }
+    window.addEventListener('resize', resizeGame);
+
     function drawPlayer() {
       ctx.beginPath();
       ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
-      ctx.fillStyle = '#444';
+      ctx.fillStyle = '#44c';
       ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#fff";
+      ctx.stroke();
     }
+
     function drawObstacles() {
       obstacles.forEach(o => {
         ctx.fillStyle = '#666';
         ctx.fillRect(o.x, o.y, o.w, o.h);
       });
     }
+
     function updateObstacles() {
-      for (let o of obstacles) o.y += 3;
+      for (let o of obstacles) o.y += 3 + Math.min(score / 300, 8); // 随分数变快
       if (Math.random() < 0.03) {
-        let w = 40 + Math.random() * 40;
-        let x = Math.random() * (areaWidth - w);
-        obstacles.push({ x: x, y: -20, w: w, h: 20 });
+        const w = 40 + Math.random() * 40;
+        const x = Math.random() * (areaWidth - w);
+        obstacles.push({ x, y: -20, w, h: 20 });
       }
-      obstacles = obstacles.filter(o => o.y < 600);
+      obstacles = obstacles.filter(o => o.y < areaHeight);
     }
+
     function checkCollision() {
       for (let o of obstacles) {
-        if (player.x + player.r > o.x && player.x - player.r < o.x + o.w &&
-            player.y + player.r > o.y && player.y - player.r < o.y + o.h) {
+        if (
+          player.x + player.r > o.x && player.x - player.r < o.x + o.w &&
+          player.y + player.r > o.y && player.y - player.r < o.y + o.h
+        ) {
           gameOver = true;
         }
       }
     }
+
     function expandArea() {
-      areaWidth += 0.1;
-      canvas.width = areaWidth;
+      // 不再无限扩展，最大为屏幕宽度
+      // areaWidth = Math.min(areaWidth + 0.08, expandMax);
+      // canvas.width = areaWidth;
     }
+
     function gameLoop() {
       if (gameOver) {
         ctx.fillStyle = "#fff";
-        ctx.font = "36px sans-serif";
-        ctx.fillText("阴没边了都！", areaWidth/2 - 100, 300);
-        ctx.font = "24px sans-serif";
-        ctx.fillText("分数: " + score, areaWidth/2 - 40, 350);
+        ctx.font = "32px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("阴没边了都！", areaWidth / 2, areaHeight / 2 - 12);
+        ctx.font = "22px sans-serif";
+        ctx.fillText("分数: " + score, areaWidth / 2, areaHeight / 2 + 32);
+        ctx.font = "18px sans-serif";
+        ctx.fillText("按空格或触摸重来", areaWidth / 2, areaHeight / 2 + 60);
         return;
       }
-      ctx.clearRect(0, 0, areaWidth, 600);
+      ctx.clearRect(0, 0, areaWidth, areaHeight);
       drawPlayer();
       drawObstacles();
       updateObstacles();
       checkCollision();
       score++;
       document.getElementById('score').innerText = "分数: " + score;
+
+      // 玩家移动
+      if (moveLeft) player.x -= player.speed;
+      if (moveRight) player.x += player.speed;
+      if (player.x < player.r) player.x = player.r;
+      if (player.x > areaWidth - player.r) player.x = areaWidth - player.r;
+
+      // area不扩展，始终居中
       expandArea();
       requestAnimationFrame(gameLoop);
     }
+
+    // 键盘
     document.addEventListener('keydown', e => {
-      if (e.key === 'a' || e.key === 'ArrowLeft') player.x -= player.speed;
-      if (e.key === 'd' || e.key === 'ArrowRight') player.x += player.speed;
-      if (player.x < player.r) player.x = player.r;
-      if (player.x > areaWidth - player.r) player.x = areaWidth - player.r;
-      if (gameOver && (e.key === 'r' || e.key === ' ')) location.reload();
+      if (e.key === 'a' || e.key === 'ArrowLeft') moveLeft = true;
+      if (e.key === 'd' || e.key === 'ArrowRight') moveRight = true;
+      if (gameOver && (e.key === ' ' || e.key === 'r')) restart();
     });
-    gameLoop();
-  </script>
-</body>
-</html>
+    document.addEventListener('keyup', e => {
+      if (e.key === 'a' || e.key === 'ArrowLeft') moveLeft = false;
+      if (e.key === 'd' || e.key === 'ArrowRight') moveRight = false;
+    });
+
+    // 按钮
+    document.getElementById('leftBtn').addEventListener('touchstart', e => { moveLeft = true; e.preventDefault(); });
+    document.getElementById('leftBtn').addEventListener('touchend', e => { moveLeft = false; e.preventDefault(); });
+    document.getElementById('rightBtn').addEventListener('touchstart', e => { moveRight = true; e.preventDefault(); });
+    document.getElementById('rightBtn').addEventListener('touchend', e => { moveRight = false; e.preventDefault(); });
+
+    // 按钮支持鼠标
+    document.getElementById('leftBtn').addEventListener('mousedown', e => { moveLeft = true; });
+    document.getElementById('leftBtn').addEventListener('mouseup', e => { moveLeft = false; });
+    document.getElementById('rightBtn').addEventListener('mousedown', e => { moveRight = true; });
+    document.getElementById('rightBtn').addEventListener('mouseup', e => { moveRight = false; });
+
+    // 触摸滑动屏幕控制
+    let touchStartX = null;
+    canvas.addEventListener('touchstart', e => {
+      if (gameOver) { restart(); return; }
+      if (e.touches.length
