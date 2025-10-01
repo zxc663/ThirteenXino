@@ -3,122 +3,771 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互动问答</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script>
-        // 自定义Tailwind配置
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#ff6b8b',
-                        secondary: '#f8f9fa',
-                        accent: '#ffe0e9'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
+    <title>荆棘之心与铁誓骑士</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
         }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .content-auto {
-                content-visibility: auto;
-            }
-            .popup-shadow {
-                box-shadow: 0 10px 25px -5px rgba(255, 107, 139, 0.3);
-            }
-            .heart-beat {
-                animation: heartbeat 1.5s ease-in-out infinite;
-            }
-            @keyframes heartbeat {
-                0% { transform: scale(1); }
-                15% { transform: scale(1.15); }
-                30% { transform: scale(1); }
-                45% { transform: scale(1.15); }
-                60% { transform: scale(1); }
-                100% { transform: scale(1); }
-            }
-            .fade-in {
-                animation: fadeIn 0.5s ease forwards;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
+
+        body {
+            background-color: #f0e9d8;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #5a3e2b;
+            margin-bottom: 20px;
+        }
+
+        /* 对话历史区域 - 核心功能 */
+        #dialogue-history {
+            height: 500px;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+
+        .dialogue-line {
+            margin-bottom: 18px;
+            padding-left: 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .dialogue-speaker {
+            font-weight: bold;
+            margin-right: 10px;
+            display: inline-block;
+            min-width: 60px;
+        }
+
+        .speaker-艾拉 {
+            color: #8b5a2b;
+            border-left-color: #8b5a2b;
+        }
+
+        .speaker-系统 {
+            color: #4a6fa5;
+            border-left-color: #4a6fa5;
+            font-style: italic;
+        }
+
+        .speaker-雷恩 {
+            color: #2e8b57;
+            border-left-color: #2e8b57;
+        }
+
+        .dialogue-text {
+            vertical-align: top;
+        }
+
+        /* 选项按钮区域 - 核心功能 */
+        #options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 15px 20px;
+            background-color: #5a3e2b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .option-btn:hover {
+            background-color: #8b5a2b;
+            transform: translateX(5px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+
+        .option-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 打字机效果辅助 */
+        #typing-indicator {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+            display: none;
+        }
+
+        /* 滚动条美化 */
+        #dialogue-history::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #dialogue-history::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #dialogue-history::-webkit-scrollbar-thumb {
+            background: #bbb;
+            border-radius: 4px;
+        }
+
+        #dialogue-history::-webkit-scrollbar-thumb:hover {
+            background: #999;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-accent to-white min-h-screen flex items-center justify-center p-4 font-sans">
-    <!-- 遮罩层 -->
-    <div id="overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"></div>
-
-    <!-- 问答弹窗 -->
-    <div id="questionPopup" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 md:p-8 popup-shadow max-w-md w-full fade-in z-50">
-        <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-primary text-center mb-8">你是否期待我在？</h2>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <button id="btn1" class="px-8 py-3 bg-primary/10 text-primary rounded-full font-medium transition-all hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50">嘴硬</button>
-            <button id="btn2" class="px-8 py-3 bg-primary/10 text-primary rounded-full font-medium transition-all hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50">承认</button>
-        </div>
-    </div>
-
-    <!-- 爱心与提示弹窗（初始隐藏） -->
-    <div id="resultPopup" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-white/95 backdrop-blur-md rounded-2xl p-8 popup-shadow max-w-md w-full opacity-0 pointer-events-none transition-opacity 0.5s z-50">
-        <div class="text-primary text-6xl mb-6 heart-beat">
-            <<i class="fa fa-heart"></</i>
-        </div>
-        <p class="text-[clamp(1.2rem,2vw,1.5rem)] font-medium text-gray-700 text-center">嘻嘻，今天开心吗？</p>
-        <button id="closeBtn" class="mt-8 px-6 py-2 bg-primary text-white rounded-full font-medium transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
-            开心呀
-        </button>
-    </div>
+<body>
+    <h1>荆棘之心与铁誓骑士</h1>
+    
+    <div id="dialogue-history"></div>
+    <div id="typing-indicator">正在讲述故事...</div>
+    <div id="options-container"></div>
 
     <script>
-        // 获取DOM元素
-        const questionPopup = document.getElementById('questionPopup');
-        const resultPopup = document.getElementById('resultPopup');
-        const overlay = document.getElementById('overlay');
-        const btn1 = document.getElementById('btn1');
-        const btn2 = document.getElementById('btn2');
-        const closeBtn = document.getElementById('closeBtn');
+        // 游戏核心状态管理
+        const gameState = {
+            currentSceneId: "scene_1_start",
+            relationships: { ella: 50 }, // 保留好感度逻辑但不显示
+            storyRoute: null, // loyal(忠诚)/rebel(叛逃)/investigate(调查)
+            flags: {
+                hasSeenMagic: false,
+                hasGottenEvidence: false,
+                hasAidedElla: false
+            }
+        };
 
-        // 选项点击事件
-        function handleAnswerClick() {
-            // 隐藏问题弹窗
-            questionPopup.style.opacity = '0';
-            questionPopup.style.transform = 'translate(-50%, -50%) scale(0.9)';
-            questionPopup.style.pointerEvents = 'none';
+        // 优化后场景数据 - 贴合人设：艾拉（犀利叛逆+细腻）、雷恩（坚定+有温度）
+        const scenes = {
+            // 第一章：启程 - 试探与伪装
+            "scene_1_start": {
+                speaker: "艾拉",
+                text: "艾拉指尖摩挲着颈间荆棘项链的红宝石，目光掠过窗外倒退的树影，声音里淬着寒意：'父亲的新护卫？叫雷恩是吧？别装了——你我都清楚，你不是来“保护”我的，是来押着我去边境，换那几座破铁矿的“监工”。'",
+                options: [
+                    {
+                        text: "“雷恩，见过公主殿下。我的职责是确保您安全抵达要塞，这既是命令，也是骑士的本分。”",
+                        nextScene: "scene_1_loyal",
+                        effect: { relationships: { ella: -5 } },
+                        speaker: "雷恩",
+                        route: "loyal"
+                    },
+                    {
+                        text: "“如果监工都穿这么亮的盔甲，皇家护卫队的‘低调’考核，我怕是要垫底了。”",
+                        nextScene: "scene_1_humor",
+                        effect: { relationships: { ella: +8 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“您的项链纹路像在抑制什么力量。而且您说‘换铁矿’时，指尖攥紧了裙摆——您在抗拒这场联姻，对吗？”",
+                        nextScene: "scene_1_insight",
+                        effect: { relationships: { ella: 0 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_1_loyal": {
+                speaker: "艾拉",
+                text: "艾拉冷笑一声，转头时眼底尽是讥诮：'又是个把“本分”挂在嘴边的木头。也好，雷恩骑士，希望你的“本分”，别变成捆住我手脚的锁链。'",
+                options: [
+                    {
+                        text: "“骑士的本分是守护，不是囚禁。我会用剑证明，而非空话。”",
+                        nextScene: "scene_2_approach",
+                        effect: { relationships: { ella: -3 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_1_humor": {
+                speaker: "艾拉",
+                text: "艾拉嘴角绷不住向上弯了弯，指尖的红宝石闪过一丝微光：'算你有点意思，比前几个只会背《骑士守则》的老古板强。平民出身靠剑术破格晋升？难怪不懂宫廷里的弯弯绕。'",
+                options: [
+                    {
+                        text: "“剑术好至少能挡刀，总比只会耍嘴皮子的强。路上有麻烦，我替您挡着。”",
+                        nextScene: "scene_2_approach",
+                        effect: { relationships: { ella: +5 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“主要是怕被教官罚跑五十圈——比起宫廷弯弯绕，还是练剑简单。”",
+                        nextScene: "scene_2_approach",
+                        effect: { relationships: { ella: +3 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_1_insight": {
+                speaker: "艾拉",
+                text: "艾拉指尖猛地掐进项链绳结，脸色沉了沉：'你倒比那些只会察言观色的朝臣眼尖。这是“荆棘之心”，我母亲的遗物——也是用来封我魔法的枷锁。至于联姻……把人当货物交易，你觉得合理？'",
+                options: [
+                    {
+                        text: "“王国需要铁矿养兵，有时牺牲难免。我会确保您安全，这是我的任务。”",
+                        nextScene: "scene_2_approach",
+                        effect: { relationships: { ella: -10 } },
+                        speaker: "雷恩",
+                        route: "loyal"
+                    },
+                    {
+                        text: "“不合理。但我现在能做的，只有先护住您的命——其他的，我们路上再想办法。”",
+                        nextScene: "scene_2_approach",
+                        effect: { relationships: { ella: +5 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+
+            // 第二章：林中遇袭 - 信任的转折点
+            "scene_2_approach": {
+                speaker: "系统",
+                text: "马车突然狠狠一震，车轮碾过陷阱的脆响刺破空气！车外传来护卫的惨叫，粗哑的嗓音嘶吼：'把公主拖出来！凡里克大人有令，活要见人，死要见尸！'",
+                options: [
+                    {
+                        text: "“殿下锁好车门！我去解决他们，很快回来！”",
+                        nextScene: "scene_2_attack",
+                        effect: { relationships: { ella: 0 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_2_attack": {
+                speaker: "系统",
+                text: "你拔剑冲出去，才发现袭击者穿的是王国卫兵制服——只是刮掉了皇家徽章！刀刃相撞间，你瞥见个蒙面人绕去车后，短匕淬着绿油油的毒；而艾拉的车窗悄悄降下，指尖凝着淡紫色的魔法光，荆棘项链在发烫！",
+                options: [
+                    {
+                        text: "“殿下不准动！待在车里！魔法会暴露身份，这是命令！”",
+                        nextScene: "scene_2_aftermath_force",
+                        effect: { relationships: { ella: -12, flag: { hasSeenMagic: true } } },
+                        speaker: "雷恩",
+                        route: "loyal"
+                    },
+                    {
+                        text: "“殿下，我替你挡着！你用魔法自保，我信你不会乱来！”",
+                        nextScene: "scene_2_aftermath_trust",
+                        effect: { relationships: { ella: +15, flag: { hasSeenMagic: true } } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“您会魔法？！凡里克是谁？这些人是他派来的？”",
+                        nextScene: "scene_2_aftermath_doubt",
+                        effect: { relationships: { ella: -8, flag: { hasSeenMagic: true } } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_2_aftermath_force": {
+                speaker: "艾拉",
+                text: "战斗结束后，艾拉站在被冻成冰雕的袭击者旁，脸色惨白，项链失去光泽：'你看见了。我不只是“联姻筹码”，还是个被王室封印魔法的“异类”。这些人是首席顾问凡里克的私兵——他要在我嫁去边境前，灭口。'",
+                options: [
+                    {
+                        text: "“即便如此，我仍要完成护送任务。但在那之前，我会用剑挡下所有针对您的危险。”",
+                        nextScene: "scene_3_campfire_loyal",
+                        effect: { relationships: { ella: -5 } },
+                        speaker: "雷恩",
+                        route: "loyal"
+                    }
+                ]
+            },
+            "scene_2_aftermath_trust": {
+                speaker: "艾拉",
+                text: "艾拉收了魔法，递来块刻着狮子徽章的令牌，指尖还带着余温：'谢了。凡里克想借联姻除掉我，好让我那草包弟弟继位。这令牌能调要塞三成守军，你拿着——以后我们算半个同盟了。'",
+                options: [
+                    {
+                        text: "“同盟得讲证据。凡里克是国王亲信，我们得拿到他的把柄，才能揭穿他。”",
+                        nextScene: "scene_3_campfire_investigate",
+                        effect: { relationships: { ella: +10 } },
+                        speaker: "雷恩",
+                        route: "investigate"
+                    },
+                    {
+                        text: "“要什么证据？联姻本就是陷阱，我带你走，去王都找国王对质。”",
+                        nextScene: "scene_3_campfire_rebel",
+                        effect: { relationships: { ella: +15 } },
+                        speaker: "雷恩",
+                        route: "rebel"
+                    }
+                ]
+            },
+            "scene_2_aftermath_doubt": {
+                speaker: "艾拉",
+                text: "艾拉后退半步，项链发出细锐的嗡鸣，眼神像带了刺：'你先问魔法，再问凡里克？你在乎的是真相，还是我这个“异类”会不会威胁到你的任务？凡里克私通邻国，我知道他的秘密，所以他要杀我！'",
+                options: [
+                    {
+                        text: "“我不是质疑你。告诉我凡里克的阴谋，我们一起想办法——我不会把你当‘异类’。”",
+                        nextScene: "scene_3_campfire_investigate",
+                        effect: { relationships: { ella: -3 } },
+                        speaker: "雷恩",
+                        route: "investigate"
+                    },
+                    {
+                        text: "“无论你会不会魔法，保护你完成任务都是我的职责。凡里克的事，我会上报国王。”",
+                        nextScene: "scene_3_campfire_loyal",
+                        effect: { relationships: { ella: -8 } },
+                        speaker: "雷恩",
+                        route: "loyal"
+                    }
+                ]
+            },
+
+            // 第三章：篝火夜话 - 秘密与心扉
+            "scene_3_campfire_loyal": {
+                speaker: "艾拉",
+                text: "篝火跳着火星，艾拉把项链塞进衣领，声音轻得像风：'雷恩，你说骑士的“忠诚”是什么？是听国王的话，哪怕他让你送一个人去死？还是……守住你心里觉得对的事？'",
+                options: [
+                    {
+                        text: "“骑士的忠诚是守诺。国王命我护您安全，我就不会让您出事——这就是我的正义。”",
+                        nextScene: "scene_4_loyal_1",
+                        effect: { relationships: { ella: -10 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“我不知道……但我会先护您到要塞。如果凡里克真要动手，我不会坐视不管。”",
+                        nextScene: "scene_4_loyal_2",
+                        effect: { relationships: { ella: -5 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_3_campfire_investigate": {
+                speaker: "艾拉",
+                text: "艾拉把张皱巴巴的纸按在篝火旁，字迹潦草却盖着皇家印：'这是凡里克和邻国的密信，说“荆棘之心已控，联姻后即可动手”。婚宴上他会给我下毒，嫁祸邻国开战。我们得拿到原件，当众揭穿他。'",
+                options: [
+                    {
+                        text: "“我扮成侍卫混进他房间找原件。你在宴会上跟他周旋，吸引注意力——我们配合好。”",
+                        nextScene: "scene_4_investigate_1",
+                        effect: { relationships: { ella: +8, flag: { hasGottenEvidence: false } } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“找要塞指挥官帮忙？凭这副本，让他派伏兵——拿到原件就动手，更稳妥。”",
+                        nextScene: "scene_4_investigate_2",
+                        effect: { relationships: { ella: +3, flag: { hasGottenEvidence: false } } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_3_campfire_rebel": {
+                speaker: "艾拉",
+                text: "艾拉盯着篝火，眼里像有火苗在跳，项链的红宝石泛着暖光：'凡里克在要塞埋了死士，婚宴是鸿门宴！我们别去，连夜绕路回王都——但路上肯定有追兵，你真要跟我走？这可是叛逃。'",
+                options: [
+                    {
+                        text: "“我不是叛逃，是选对的事。我的剑会替你劈开追兵，你去哪，我就护到哪。”",
+                        nextScene: "scene_4_rebel_1",
+                        effect: { relationships: { ella: +15 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“直接走太冒险。我们假意去要塞，半路甩开追兵——用计比硬拼好。”",
+                        nextScene: "scene_4_rebel_2",
+                        effect: { relationships: { ella: +10 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+
+            // 第四章：分歧与抉择 - 三条道路
+            // 忠诚路线
+            "scene_4_loyal_1": {
+                speaker: "系统",
+                text: "到了边境小镇，你掀开艾拉的帐篷，只看见张字条：'我不能让凡里克的阴谋得逞，别追我，完成你的任务吧。' 镇外马蹄声越来越近——凡里克的追兵到了。",
+                options: [
+                    {
+                        text: "“向要塞守军报告，按命令继续准备联姻——这是我的任务。”",
+                        nextScene: "scene_5_loyal_tragedy",
+                        effect: { relationships: { ella: -20 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“任务算什么？她一个人打不过追兵。拔剑追出去：‘艾拉，我来帮你！’”",
+                        nextScene: "scene_5_loyal_regret",
+                        effect: { relationships: { ella: +12, flag: { hasAidedElla: true } } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_4_loyal_2": {
+                speaker: "系统",
+                text: "进了要塞，凡里克假笑着迎上来：'雷恩骑士，公主累了，今晚你守在她房外。' 深夜，房里传来打斗声，你踹开门，看见艾拉被两个死士按在地上，凡里克阴笑：'正好，两个碍事的一起解决。'",
+                options: [
+                    {
+                        text: "“放开她！我以骑士之名起誓，今天你别想动她一根手指！”",
+                        nextScene: "scene_5_loyal_awaken",
+                        effect: { relationships: { ella: +18, flag: { hasAidedElla: true } } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“凡里克大人，国王命我护公主安全！你这样，我要上报王室！”",
+                        nextScene: "scene_5_loyal_fail",
+                        effect: { relationships: { ella: -15 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+
+            // 调查路线
+            "scene_4_investigate_1": {
+                speaker: "系统",
+                text: "婚宴当晚，你扮成侍卫溜进凡里克房间，在书架暗格里摸到密信原件——上面还写着“封印魔法，控制王室血脉”！突然门被推开，凡里克冷笑着举剑：'雷恩骑士，偷东西可不是骑士所为啊。'",
+                options: [
+                    {
+                        text: "“拿着密信冲出去，直奔宴会厅：‘大家看！凡里克通敌害公主的证据！’”",
+                        nextScene: "scene_5_investigate_success",
+                        effect: { relationships: { ella: +20, flag: { hasGottenEvidence: true } } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“把密信塞进怀里，拔剑跟他周旋：‘艾拉说你会来，她已经引开众人了！’”",
+                        nextScene: "scene_5_investigate_smart",
+                        effect: { relationships: { ella: +12, flag: { hasGottenEvidence: true } } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_4_investigate_2": {
+                speaker: "系统",
+                text: "你把副本给要塞指挥官，他看完皱眉：'凡里克位高权重，副本没用。但我调一队亲信埋伏在殿外，你拿到原件就举剑为号——我们里外夹击。'",
+                options: [
+                    {
+                        text: "“按计划来，我跟艾拉配合拿原件，信号一发，伏兵就上！”",
+                        nextScene: "scene_5_investigate_success",
+                        effect: { relationships: { ella: +15, flag: { hasGottenEvidence: true } } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“不行，太冒险。我先告诉艾拉延后，等摸清死士位置再动手——安全第一。”",
+                        nextScene: "scene_5_investigate_delay",
+                        effect: { relationships: { ella: +8 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+
+            // 叛逃路线
+            "scene_4_rebel_1": {
+                speaker: "系统",
+                text: "你们连夜逃进山谷，却被追兵堵住！为首的骑士喊：'雷恩，背叛王国者，格杀勿论！放下公主投降！' 艾拉的项链开始发烫，她咬着牙：'封印要松了，我需要时间解开封印！'",
+                options: [
+                    {
+                        text: "“拔剑挡在她身前，对追兵喊：‘想伤她，先踏过我的尸体！’”",
+                        nextScene: "scene_5_rebel_hero",
+                        effect: { relationships: { ella: +25 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“拉着她退进山洞，用石头堵门：‘我在这挡着，你赶紧解封印——别让我白拼！’”",
+                        nextScene: "scene_5_rebel_strategy",
+                        effect: { relationships: { ella: +18 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+            "scene_4_rebel_2": {
+                speaker: "系统",
+                text: "你们假意进要塞，深夜趁守卫换班溜出去，却见凡里克带着人在城外等着！艾拉拉住你的手，指尖发凉：'往东跑，魔法森林里有我母亲的避难所——我们能甩掉他们！'",
+                options: [
+                    {
+                        text: "“你先跑，我断后！” 把她往森林推：“我会追上你，相信我！”",
+                        nextScene: "scene_5_rebel_sacrifice",
+                        effect: { relationships: { ella: +22 } },
+                        speaker: "雷恩"
+                    },
+                    {
+                        text: "“背靠背跟她站着，拔剑：‘你用小魔法挡一下，我们边打边退——一起走！’”",
+                        nextScene: "scene_5_rebel_fight",
+                        effect: { relationships: { ella: +15 } },
+                        speaker: "雷恩"
+                    }
+                ]
+            },
+
+            // 第五章：终局 - 王座之前
+            // 忠诚路线结局
+            "scene_5_loyal_tragedy": {
+                speaker: "系统",
+                text: "你按命令完成了联姻，王国拿到了铁矿。但三年后，凡里克勾结的邻国突然入侵，城破那天，你在反抗军的尸体堆里找到了荆棘项链——艾拉成了反抗军首领，战死前还攥着你的骑士徽章。你握着项链，战死在她倒下的地方。",
+                options: [
+                    {
+                        text: "“重新开始，换一种选择”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_loyal_regret": {
+                speaker: "系统",
+                text: "你追上艾拉时，她已经中了毒箭。你杀退追兵，她靠在你怀里笑：'我还以为……你只会守着你的任务。' 你们逃回王都揭穿凡里克，联姻作废，但你终究是骑士，她成了女王。每次上朝，她看你的眼神都带着遗憾，却始终隔着君臣之礼。",
+                options: [
+                    {
+                        text: "“重新开始，弥补遗憾”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_loyal_awaken": {
+                speaker: "系统",
+                text: "你拼死杀了死士，凡里克想跑，却被艾拉解开封印的魔法困住。你们押着他回王都，国王才知自己被蒙在鼓里，废除了联姻。艾拉拍着你的肩，眼里有了笑意：'原来骑士的忠诚，也可以选对的事——以后，你做我的护卫队长吧。'",
+                options: [
+                    {
+                        text: "“重新开始，探索更多可能”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_loyal_fail": {
+                speaker: "系统",
+                text: "你的犹豫给了凡里克机会，他下令死士动手。艾拉为了护你，中了毒箭，临终前把荆棘项链塞给你：'别……别再做只会听话的骑士……' 你杀了凡里克，却永远失去了她。后来你成了皇家护卫长，却再也没笑过，也再也没拔过剑。",
+                options: [
+                    {
+                        text: "“重新开始，不再犹豫”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+
+            // 调查路线结局
+            "scene_5_investigate_success": {
+                speaker: "系统",
+                text: "你举着密信冲进宴会厅，凡里克想狡辩，艾拉已经解开封印，用魔法逼他说出真相。国王赶来后震怒，下令抓了凡里克。事后艾拉笑着递你一杯酒：'雷恩，你不仅有勇气，还信我——这样的盟友，我想一直留在身边。'",
+                options: [
+                    {
+                        text: "“重新开始，体验其他路线”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_investigate_smart": {
+                speaker: "系统",
+                text: "你跟凡里克周旋时，艾拉带着宾客赶来，假装跟他争执引开注意。你趁机把密信扔给埋伏的卫兵，凡里克当场被抓。事后艾拉凑到你身边，声音里带了笑意：'没想到你不仅会打架，还会耍计谋——有点迷人。'",
+                options: [
+                    {
+                        text: "“重新开始，靠近心动结局”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_investigate_delay": {
+                speaker: "系统",
+                text: "你们延后行动，摸清了死士位置，还找到了凡里克党羽的名单。最终不仅抓了凡里克，还端了他在王都的势力。国王让艾拉自己选未来，她转头看向你：'雷恩，我想改革王室旧规，你愿意陪我一起吗？'",
+                options: [
+                    {
+                        text: "“重新开始，走向并肩之路”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+
+            // 叛逃路线结局
+            "scene_5_rebel_hero": {
+                speaker: "系统",
+                text: "你挡住所有追兵，艾拉解开封印，魔法爆发把敌人掀飞。她跑过来帮你包扎伤口，指尖微微发抖：'你刚才说的话……我记一辈子。' 你们回王都揭穿凡里克后，艾拉放弃了王位，跟你一起游历大陆——后来，人们都在传，有个会魔法的姑娘和穿亮甲的骑士，在到处行侠仗义。",
+                options: [
+                    {
+                        text: "“重新开始，再遇一次心动”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_rebel_strategy": {
+                speaker: "系统",
+                text: "你们在山洞里等到艾拉解开封印，她用魔法引发雪崩困住追兵。逃出去后，她靠在你肩上笑：'你的计谋加我的魔法，简直天衣无缝。' 你们没回王都，而是组织了义军，最终推翻凡里克势力。艾拉成了女王，你成了她的王夫——每天上朝，她都会偷偷跟你递眼神。",
+                options: [
+                    {
+                        text: "“重新开始，解锁圆满结局”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_rebel_sacrifice": {
+                speaker: "系统",
+                text: "你断后时被砍伤昏迷，醒来时在魔法森林的小屋里。艾拉握着你的手，眼睛通红：'我还以为……我要失去你了。' 你们联合王室忠臣扳倒凡里克后，一起放弃了贵族身份，在森林里盖了小木屋。每天清晨，你练剑，她摆弄魔法花草——日子平淡，却满是暖意。",
+                options: [
+                    {
+                        text: "“重新开始，再尝一次幸福”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            },
+            "scene_5_rebel_fight": {
+                speaker: "系统",
+                text: "你们背靠背打退追兵，艾拉用魔法挡箭，你用剑劈出通路。逃到安全地方后，她靠在你身上喘气，笑着说：'原来跟人并肩作战，比一个人用魔法有意思多了。' 你们带着证据回王都，凡里克伏法。艾拉成了女王，你成了骑士团长——没人知道，每晚王宫的窗边，都会有两个人一起看星星。",
+                options: [
+                    {
+                        text: "“重新开始，探索所有可能”",
+                        nextScene: "scene_1_start",
+                        effect: { relationships: { ella: 50 }, flag: { hasSeenMagic: false, hasGottenEvidence: false, hasAidedElla: false } },
+                        speaker: "系统"
+                    }
+                ]
+            }
+        };
+
+        // DOM元素获取
+        const dialogueHistoryEl = document.getElementById('dialogue-history');
+        const optionsContainerEl = document.getElementById('options-container');
+        const typingIndicatorEl = document.getElementById('typing-indicator');
+
+        // 1. 打字机效果函数
+        function typeWriter(text, element, callback) {
+            let index = 0;
+            element.textContent = '';
+            typingIndicatorEl.style.display = 'block';
+
+            const typingSpeed = 35; // 字符间隔时间(ms)
+            let typingInterval;
+
+            // 打字逻辑
+            function type() {
+                if (index < text.length) {
+                    element.textContent += text.charAt(index);
+                    index++;
+                    // 实时滚动到底部
+                    dialogueHistoryEl.scrollTop = dialogueHistoryEl.scrollHeight;
+                } else {
+                    clearInterval(typingInterval);
+                    typingIndicatorEl.style.display = 'none';
+                    callback(); // 完成后执行回调
+                }
+            }
+
+            typingInterval = setInterval(type, typingSpeed);
+
+            // 点击跳过打字效果
+            const skipHandler = function() {
+                clearInterval(typingInterval);
+                element.textContent = text;
+                typingIndicatorEl.style.display = 'none';
+                dialogueHistoryEl.scrollTop = dialogueHistoryEl.scrollHeight;
+                element.removeEventListener('click', skipHandler);
+                callback();
+            };
+
+            element.addEventListener('click', skipHandler);
+        }
+
+        // 2. 添加对话到历史
+        function addToDialogueHistory(speaker, text) {
+            const dialogueLineEl = document.createElement('div');
+            dialogueLineEl.className = 'dialogue-line';
             
-            // 显示结果弹窗（延迟0.3秒增加过渡效果）
-            setTimeout(() => {
-                resultPopup.style.opacity = '1';
-                resultPopup.style.pointerEvents = 'auto';
-            }, 300);
+            const speakerEl = document.createElement('span');
+            speakerEl.className = `dialogue-speaker speaker-${speaker}`;
+            speakerEl.textContent = `[${speaker}]：`;
+            
+            const textEl = document.createElement('span');
+            textEl.className = 'dialogue-text';
+            
+            dialogueLineEl.appendChild(speakerEl);
+            dialogueLineEl.appendChild(textEl);
+            dialogueHistoryEl.appendChild(dialogueLineEl);
+
+            // 滚动到底部
+            dialogueHistoryEl.scrollTop = dialogueHistoryEl.scrollHeight;
+
+            return textEl;
         }
 
-        // 关闭弹窗事件
-        function handleClose() {
-            resultPopup.style.opacity = '0';
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-                resultPopup.style.pointerEvents = 'none';
-                overlay.style.pointerEvents = 'none';
-            }, 500);
+        // 3. 应用选项效果（移除好感度显示相关）
+        function applyEffects(effects) {
+            if (!effects) return;
+
+            // 处理好感度变化（保留逻辑但不显示）
+            if (effects.relationships) {
+                Object.keys(effects.relationships).forEach(key => {
+                    if (gameState.relationships.hasOwnProperty(key)) {
+                        gameState.relationships[key] += effects.relationships[key];
+                        // 限制好感度范围 0-100
+                        gameState.relationships[key] = Math.max(0, Math.min(100, gameState.relationships[key]));
+                    }
+                });
+            }
+
+            // 处理剧情flag
+            if (effects.flag) {
+                Object.keys(effects.flag).forEach(key => {
+                    gameState.flags[key] = effects.flag[key];
+                });
+            }
+
+            // 记录故事路线
+            if (effects.route) {
+                gameState.storyRoute = effects.route;
+            }
         }
 
-        // 绑定事件
-        btn1.addEventListener('click', handleAnswerClick);
-        btn2.addEventListener('click', handleAnswerClick);
-        closeBtn.addEventListener('click', handleClose);
+        // 4. 更新选项按钮
+        function updateOptions(options) {
+            // 清空现有选项
+            optionsContainerEl.innerHTML = '';
+            // 禁用选项容器
+            optionsContainerEl.style.pointerEvents = 'none';
 
-        // 页面加载完成后自动显示弹窗
-        window.addEventListener('load', () => {
-            questionPopup.style.opacity = '1';
-            overlay.style.opacity = '1';
-        });
-    </script>
-</body>
-</html>
+            // 没有选项时直接返回
+            if (!options || options.length === 0) return;
+
+            // 创建新选项按钮
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option.text;
+                btn.disabled = true; // 初始禁用
+
+                // 选项点击事件
+                btn.addEventListener('click', () => {
+                    // 添加玩家对话
+                    const playerTextEl = addToDialogueHistory(option.speaker, option.text);
+                    playerTextEl.textContent = option.text; // 直接显示玩家选项
+                    dialogueHistoryEl.scrollTop = dialogueHistoryEl.scrollHeight;
+
+                    // 应用效果
+                    applyEffects(option);
+
+                    // 记录路线（如果有）
+                    if (option.route) {
+                        gameState.storyRoute = option.route;
+                    }
+
+                    // 加载下一场景
+                    setTimeout(() => {
+                        loadScene(option.nextScene);
+                    }, 300); // 短暂延迟提升体验
+                });
+
+                optionsContainerEl.appendChild(btn);
+            });
+
+            // 启用选项按钮
+            setTimeout(() => {
+                const optionBtns = document.querySelectorAll('.option-btn');
+                
