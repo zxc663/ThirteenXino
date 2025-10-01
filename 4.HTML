@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>去你丫的日安</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Arial Rounded MT Bold", "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            background-color: #fef9f7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* 可爱装饰图形 */
+        .decor {
+            position: fixed;
+            z-index: 0;
+            opacity: 0.7;
+        }
+
+        .circle1 {
+            top: 10%;
+            left: 5%;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffccd5, #ff9a9e);
+        }
+
+        .heart {
+            top: 20%;
+            right: 8%;
+            width: 60px;
+            height: 60px;
+            background: #ff6b81;
+            transform: rotate(45deg);
+        }
+
+        .heart::before, .heart::after {
+            content: "";
+            width: 60px;
+            height: 60px;
+            background: #ff6b81;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .heart::before {
+            top: -30px;
+            left: 0;
+        }
+
+        .heart::after {
+            top: 0;
+            left: -30px;
+        }
+
+        .star {
+            bottom: 15%;
+            left: 10%;
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 50px solid #fffacd;
+            transform: rotate(35deg);
+        }
+
+        .star::before, .star::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 50px solid #fffacd;
+        }
+
+        .star::before {
+            transform: rotate(-70deg);
+            top: 15px;
+            left: -30px;
+        }
+
+        .star::after {
+            transform: rotate(70deg);
+            top: 15px;
+            left: -30px;
+        }
+
+        .square {
+            bottom: 20%;
+            right: 12%;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(45deg, #9c88ff, #74b9ff);
+            border-radius: 15px;
+            transform: rotate(15deg);
+        }
+
+        /* 对话容器 */
+        .dialog-container {
+            position: relative;
+            z-index: 1;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(255, 154, 158, 0.2);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .dialog-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        /* 选项按钮 */
+        .options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            background-color: #ffccd5;
+            color: #333;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            background-color: #ffb6c1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+        }
+
+        /* 滑稽人物图形 */
+        .funny-character {
+            position: relative;
+            z-index: 1;
+            width: 200px;
+            height: 250px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .head {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #ffd700;
+            position: absolute;
+            top: 20px;
+            left: 25px;
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+        }
+
+        .eye-left, .eye-right {
+            width: 30px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute;
+            top: 40px;
+        }
+
+        .eye-left {
+            left: 35px;
+        }
+
+        .eye-right {
+            right: 35px;
+        }
+
+        .pupil {
+            width: 15px;
+            height: 20px;
+            border-radius: 50%;
+            background: #333;
+            position: absolute;
+            top: 10px;
+            left: 7px;
+        }
+
+        .mouth {
+            width: 80px;
+            height: 40px;
+            border-bottom: 8px solid #333;
+            border-radius: 0 0 50% 50%;
+            position: absolute;
+            top: 90px;
+            left: 35px;
+        }
+
+        .cheek-left, .cheek-right {
+            width: 40px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ff9a9e;
+            position: absolute;
+            top: 80px;
+            opacity: 0.7;
+        }
+
+        .cheek-left {
+            left: 15px;
+        }
+
+        .cheek-right {
+            right: 15px;
+        }
+
+        /* 最后文字 */
+        .final-text {
+            position: relative;
+            z-index: 1;
+            font-size: 1.2rem;
+            color: #555;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .dialog-text {
+                font-size: 1rem;
+            }
+
+            .option-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .funny-character {
+                width: 160px;
+                height: 200px;
+            }
+
+            .head {
+                width: 120px;
+                height: 120px;
+                left: 20px;
+            }
+
+            .eye-left, .eye-right {
+                width: 25px;
+                height: 35px;
+                top: 35px;
+            }
+
+            .eye-left {
+                left: 25px;
+            }
+
+            .eye-right {
+                right: 25px;
+            }
+
+            .pupil {
+                width: 12px;
+                height: 18px;
+                left: 6px;
+            }
+
+            .mouth {
+                width: 60px;
+                height: 30px;
+                top: 75px;
+                left: 30px;
+            }
+
+            .cheek-left, .cheek-right {
+                width: 35px;
+                height: 18px;
+                top: 65px;
+            }
+
+            .final-text {
+                font-size: 1rem;
+                padding: 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 可爱装饰图形 -->
+    <div class="decor circle1"></div>
+    <div class="decor heart"></div>
+    <div class="decor star"></div>
+    <div class="decor square"></div>
+
+    <!-- 对话容器 -->
+    <div class="dialog-container" id="dialogContainer">
+        <div class="dialog-text" id="dialogText">呦西，宋紫萌你还舍得起床啊？</div>
+        <div class="options" id="options">
+            <button class="option-btn" onclick="nextDialog(1)">嘴硬一下吧</button>
+            <button class="option-btn" onclick="nextDialog(1)">还是承认了吧</button>
+        </div>
+    </div>
+
+    <!-- 滑稽人物图形 -->
+    <div class="funny-character" id="funnyCharacter">
+        <div class="head">
+            <div class="eye-left">
+                <div class="pupil"></div>
+            </div>
+            <div class="eye-right">
+                <div class="pupil"></div>
+            </div>
+            <div class="mouth"></div>
+            <div class="cheek-left"></div>
+            <div class="cheek-right"></div>
+        </div>
+    </div>
+
+    <!-- 最后文字 -->
+    <div class="final-text" id="finalText">新的完美一天你想好决定要做什么了吗</div>
+
+    <script>
+        // 对话内容数组
+        const dialogs = [
+            { text: "没事哒，我不会嘲笑你的", option: "好（你猜我到底笑不笑）" },
+            { text: "今天也要好好的", option: "好（今天真的好吗？反正我不好）" },
+            { text: "要开心哟", option: "好" },
+            { text: "嘻嘻", option: "不嘻嘻" }
+        ];
+
+        let currentDialogIndex = 0;
+
+        // 切换到下一个对话
+        function nextDialog(targetIndex) {
+            // 第一个问题后，进入预设对话流程
+            if (targetIndex === 1) {
+                updateDialog(dialogs[currentDialogIndex]);
+            } else {
+                // 后续对话点击后，切换到下一个
+                currentDialogIndex++;
+                if (currentDialogIndex < dialogs.length) {
+                    updateDialog(dialogs[currentDialogIndex]);
+                } else {
+                    // 所有对话结束，显示人物和文字
+                    document.getElementById("dialogContainer").style.display = "none";
+                    document.getElementById("funnyCharacter").style.display = "block";
+                    document.getElementById("finalText").style.display = "block";
+                }
+            }
+        }
+
+        // 更新对话内容和选项
+        function updateDialog(dialog) {
+            const dialogText = document.getElementById("dialogText");
+            const options = document.getElementById("options");
+
+            dialogText.textContent = dialog.text;
+            // 清空原有选项，添加新选项
+            options.innerHTML = `<button class="option-btn" onclick="nextDialog(2)">${dialog.option}</button>`;
+        }
+    </script>
+</body>
+</html>
